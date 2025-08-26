@@ -14,7 +14,168 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      edges: {
+        Row: {
+          created_at: string
+          from_node: string
+          hospital_id: string
+          id: string
+          kind: string
+          to_node: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          from_node: string
+          hospital_id: string
+          id?: string
+          kind: string
+          to_node: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          from_node?: string
+          hospital_id?: string
+          id?: string
+          kind?: string
+          to_node?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edges_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitals: {
+        Row: {
+          building_id: string
+          checksum: string | null
+          created_at: string
+          floors: number[]
+          id: string
+          name: string
+          published_at: string | null
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          building_id: string
+          checksum?: string | null
+          created_at?: string
+          floors?: number[]
+          id?: string
+          name: string
+          published_at?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          building_id?: string
+          checksum?: string | null
+          created_at?: string
+          floors?: number[]
+          id?: string
+          name?: string
+          published_at?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
+      nodes: {
+        Row: {
+          created_at: string
+          floor: number
+          hospital_id: string
+          id: string
+          label: string | null
+          node_id: string
+          type: string
+          x: number
+          y: number
+        }
+        Insert: {
+          created_at?: string
+          floor: number
+          hospital_id: string
+          id?: string
+          label?: string | null
+          node_id: string
+          type: string
+          x: number
+          y: number
+        }
+        Update: {
+          created_at?: string
+          floor?: number
+          hospital_id?: string
+          id?: string
+          label?: string | null
+          node_id?: string
+          type?: string
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nodes_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          floor: number
+          hospital_id: string
+          id: string
+          name: string
+          node_id: string
+          room_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          floor: number
+          hospital_id: string
+          id?: string
+          name: string
+          node_id: string
+          room_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          floor?: number
+          hospital_id?: string
+          id?: string
+          name?: string
+          node_id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
