@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Map, Navigation, Users, Calendar } from "lucide-react";
+import { Map, Navigation, Users } from "lucide-react";
 
 const Index = () => {
   return (
@@ -41,20 +41,6 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Appointments
-            </CardTitle>
-            <CardDescription>
-              View and manage your upcoming appointments
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full" variant="outline">View Schedule</Button>
-          </CardContent>
-        </Card>
 
         <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
           <CardHeader>

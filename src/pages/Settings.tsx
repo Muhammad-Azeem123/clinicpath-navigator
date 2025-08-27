@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { useTheme } from "@/components/theme-provider";
 import { 
   Settings as SettingsIcon, 
   Bell, 
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 
 const Settings = () => {
+  const { theme, setTheme } = useTheme();
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -130,7 +132,7 @@ const Settings = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="theme">Theme</Label>
-                <Select defaultValue="light">
+                <Select value={theme} onValueChange={setTheme}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
