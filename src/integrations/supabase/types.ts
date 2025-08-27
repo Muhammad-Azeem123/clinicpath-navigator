@@ -14,164 +14,145 @@ export type Database = {
   }
   public: {
     Tables: {
-      edges: {
+      floors: {
         Row: {
-          created_at: string
-          from_node: string
-          hospital_id: string
+          created_at: string | null
           id: string
-          kind: string
-          to_node: string
-          weight: number
+          name: string
         }
         Insert: {
-          created_at?: string
-          from_node: string
-          hospital_id: string
-          id?: string
-          kind: string
-          to_node: string
-          weight?: number
+          created_at?: string | null
+          id: string
+          name: string
         }
         Update: {
-          created_at?: string
-          from_node?: string
-          hospital_id?: string
+          created_at?: string | null
           id?: string
-          kind?: string
-          to_node?: string
-          weight?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      location_connections: {
+        Row: {
+          created_at: string | null
+          from_location_id: string
+          id: string
+          to_location_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          from_location_id: string
+          id?: string
+          to_location_id: string
+        }
+        Update: {
+          created_at?: string | null
+          from_location_id?: string
+          id?: string
+          to_location_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "edges_hospital_id_fkey"
-            columns: ["hospital_id"]
+            foreignKeyName: "location_connections_from_location_id_fkey"
+            columns: ["from_location_id"]
             isOneToOne: false
-            referencedRelation: "hospitals"
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_connections_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
       }
-      hospitals: {
+      locations: {
         Row: {
-          building_id: string
-          checksum: string | null
-          created_at: string
-          floors: number[]
+          created_at: string | null
+          floor_id: string
           id: string
           name: string
-          published_at: string | null
-          updated_at: string
-          version: string | null
+          room: string | null
+          type: string | null
+          x: number
+          y: number
         }
         Insert: {
-          building_id: string
-          checksum?: string | null
-          created_at?: string
-          floors?: number[]
-          id?: string
+          created_at?: string | null
+          floor_id: string
+          id: string
           name: string
-          published_at?: string | null
-          updated_at?: string
-          version?: string | null
+          room?: string | null
+          type?: string | null
+          x: number
+          y: number
         }
         Update: {
-          building_id?: string
-          checksum?: string | null
-          created_at?: string
-          floors?: number[]
+          created_at?: string | null
+          floor_id?: string
           id?: string
           name?: string
-          published_at?: string | null
-          updated_at?: string
-          version?: string | null
-        }
-        Relationships: []
-      }
-      nodes: {
-        Row: {
-          created_at: string
-          floor: number
-          hospital_id: string
-          id: string
-          label: string | null
-          node_id: string
-          type: string
-          x: number
-          y: number
-        }
-        Insert: {
-          created_at?: string
-          floor: number
-          hospital_id: string
-          id?: string
-          label?: string | null
-          node_id: string
-          type: string
-          x: number
-          y: number
-        }
-        Update: {
-          created_at?: string
-          floor?: number
-          hospital_id?: string
-          id?: string
-          label?: string | null
-          node_id?: string
-          type?: string
+          room?: string | null
+          type?: string | null
           x?: number
           y?: number
         }
         Relationships: [
           {
-            foreignKeyName: "nodes_hospital_id_fkey"
-            columns: ["hospital_id"]
+            foreignKeyName: "locations_floor_id_fkey"
+            columns: ["floor_id"]
             isOneToOne: false
-            referencedRelation: "hospitals"
+            referencedRelation: "floors"
             referencedColumns: ["id"]
           },
         ]
       }
-      rooms: {
+      routes: {
         Row: {
-          category: string
-          created_at: string
-          description: string | null
-          floor: number
-          hospital_id: string
+          accessibility: string
+          created_at: string | null
+          distance: number
+          estimated_time: string
+          from_location_id: string
           id: string
-          name: string
-          node_id: string
-          room_id: string
+          steps: string[]
+          to_location_id: string
         }
         Insert: {
-          category: string
-          created_at?: string
-          description?: string | null
-          floor: number
-          hospital_id: string
+          accessibility: string
+          created_at?: string | null
+          distance: number
+          estimated_time: string
+          from_location_id: string
           id?: string
-          name: string
-          node_id: string
-          room_id: string
+          steps: string[]
+          to_location_id: string
         }
         Update: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          floor?: number
-          hospital_id?: string
+          accessibility?: string
+          created_at?: string | null
+          distance?: number
+          estimated_time?: string
+          from_location_id?: string
           id?: string
-          name?: string
-          node_id?: string
-          room_id?: string
+          steps?: string[]
+          to_location_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "rooms_hospital_id_fkey"
-            columns: ["hospital_id"]
+            foreignKeyName: "routes_from_location_id_fkey"
+            columns: ["from_location_id"]
             isOneToOne: false
-            referencedRelation: "hospitals"
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routes_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
