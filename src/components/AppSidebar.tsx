@@ -29,7 +29,6 @@ const items = [
   { title: "Interactive Map", url: "/map", icon: Map },
   { title: "Departments", url: "/departments", icon: Building },
   { title: "Navigation", url: "/navigation", icon: Navigation },
-  { title: "Appointments", url: "/appointments", icon: Calendar },
   { title: "Staff", url: "/staff", icon: Users },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Help", url: "/help", icon: HelpCircle },
