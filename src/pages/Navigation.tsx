@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MapPin, Navigation as NavigationIcon, Clock, Accessibility, Loader2, Search, Users } from "lucide-react";
 import { useNavigation, RouteResult } from "@/hooks/useNavigation";
 import { useToast } from "@/hooks/use-toast";
+import { StepVisualization } from "@/components/StepVisualization";
 
 const Navigation = () => {
   const { locations, floors, loading, findRoute } = useNavigation();
@@ -17,6 +18,20 @@ const Navigation = () => {
   const [selectedFloor, setSelectedFloor] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const { toast } = useToast();
+
+  // Check for stored route from other pages
+  useEffect(() => {
+    const storedRoute = sessionStorage.getItem('currentRoute');
+    if (storedRoute) {
+      try {
+        const route = JSON.parse(storedRoute);
+        setCurrentRoute(route);
+        sessionStorage.removeItem('currentRoute'); // Clean up
+      } catch (error) {
+        console.error('Failed to parse stored route:', error);
+      }
+    }
+  }, []);
 
   const handleFindRoute = async () => {
     if (!fromLocation || !toLocation) {
@@ -270,25 +285,26 @@ const Navigation = () => {
             </Card>
           </div>
 
-          {/* Step-by-Step Directions */}
+          {/* Enhanced Step-by-Step Directions */}
           <Card>
             <CardHeader>
-              <CardTitle>Step-by-Step Directions</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <NavigationIcon className="h-5 w-5 text-primary" />
+                Step-by-Step Directions
+              </CardTitle>
               <CardDescription>
-                Route from {currentRoute.from_location.name} to {currentRoute.to_location.name}
+                Detailed route from {(currentRoute as any).fromLocationName || currentRoute.from_location.name} to {(currentRoute as any).toLocationName || currentRoute.to_location.name}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-1">
                 {currentRoute.steps.map((step, index) => (
-                  <div key={index} className="flex gap-4 p-4 border rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                      {index + 1}
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium">{step}</p>
-                    </div>
-                  </div>
+                  <StepVisualization 
+                    key={index}
+                    step={step}
+                    index={index}
+                    isLast={index === currentRoute.steps.length - 1}
+                  />
                 ))}
               </div>
             </CardContent>

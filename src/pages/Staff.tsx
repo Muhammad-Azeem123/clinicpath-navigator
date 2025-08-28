@@ -13,6 +13,7 @@ import {
   Stethoscope,
   UserCog
 } from "lucide-react";
+import { DirectionDialog } from "@/components/DirectionDialog";
 
 const staff = [
   {
@@ -170,10 +171,15 @@ const Staff = () => {
                   <Phone className="h-4 w-4 mr-1" />
                   Call
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  Locate
-                </Button>
+                <DirectionDialog 
+                  destinationName={member.name}
+                  destinationLocation={member.location}
+                >
+                  <Button size="sm" variant="outline" className="flex-1">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    Locate
+                  </Button>
+                </DirectionDialog>
               </div>
             </CardContent>
           </Card>

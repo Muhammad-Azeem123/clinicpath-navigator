@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Map, Navigation, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -22,7 +23,9 @@ const Index = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full">Open Map</Button>
+            <Link to="/map">
+              <Button className="w-full">Open Map</Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -37,7 +40,9 @@ const Index = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" variant="outline">Find Route</Button>
+            <Link to="/navigation">
+              <Button className="w-full" variant="outline">Find Route</Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -53,7 +58,9 @@ const Index = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" variant="outline">Browse Directory</Button>
+            <Link to="/staff">
+              <Button className="w-full" variant="outline">Browse Directory</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>

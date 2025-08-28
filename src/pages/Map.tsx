@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MapPin, Search, Zap, Navigation } from "lucide-react";
+import { HospitalMap } from "@/components/HospitalMap";
 
 const Map = () => {
   return (
@@ -14,22 +15,7 @@ const Map = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Hospital Floor Plan
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">Interactive map will be displayed here</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <HospitalMap />
         </div>
 
         <div className="space-y-4">

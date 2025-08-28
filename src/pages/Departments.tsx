@@ -15,6 +15,7 @@ import {
   Loader2
 } from "lucide-react";
 import { useNavigation } from "@/hooks/useNavigation";
+import { DirectionDialog } from "@/components/DirectionDialog";
 
 const Departments = () => {
   const { locations, floors, loading } = useNavigation();
@@ -158,7 +159,13 @@ const Departments = () => {
                 </div>
                 
                 <div className="flex gap-2 pt-2">
-                  <Button size="sm" className="flex-1">Get Directions</Button>
+                  <DirectionDialog 
+                    destinationName={dept.name}
+                    destinationId={dept.id}
+                    destinationLocation={dept.room || `${floor?.name || 'Unknown Floor'}`}
+                  >
+                    <Button size="sm" className="flex-1">Get Directions</Button>
+                  </DirectionDialog>
                   <Button size="sm" variant="outline" className="flex-1">Contact</Button>
                 </div>
               </CardContent>
