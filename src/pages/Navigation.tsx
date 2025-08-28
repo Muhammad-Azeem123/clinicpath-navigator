@@ -77,7 +77,7 @@ const Navigation = () => {
 
   // Get filtered locations for display
   const filteredLocations = locations.filter(location => {
-    const matchesFloor = !selectedFloor || location.floor_id === selectedFloor;
+    const matchesFloor = !selectedFloor || selectedFloor === "all" || location.floor_id === selectedFloor;
     const matchesSearch = !searchQuery || 
       location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (location.room && location.room.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -103,7 +103,7 @@ const Navigation = () => {
               <SelectValue placeholder="Select floor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Floors</SelectItem>
+              <SelectItem value="all">All Floors</SelectItem>
               {floors.map((floor) => (
                 <SelectItem key={floor.id} value={floor.id}>
                   {floor.name}
