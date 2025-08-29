@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Navigation, Layers, ZoomIn, ZoomOut } from "lucide-react";
+import { MapPin, Navigation, Layers, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { useNavigation } from "@/hooks/useNavigation";
+import { UniversalSearch } from "@/components/UniversalSearch";
 
 export const HospitalMap = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -12,6 +13,8 @@ export const HospitalMap = () => {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     drawMap();
@@ -170,7 +173,56 @@ export const HospitalMap = () => {
   };
 
   const handleZoom = (delta: number) => {
-    setZoom(prev => Math.max(0.5, Math.min(2, prev + delta)));
+    setZoom(prev => Math.max(0.5, Math.min(3, prev + delta)));
+  };
+
+  const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    setIsDragging(true);
+    setLastMousePos({ x: event.clientX, y: event.clientY });
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDragging) return;
+    
+    const deltaX = event.clientX - lastMousePos.x;
+    const deltaY = event.clientY - lastMousePos.y;
+    
+    setPan(prev => ({
+      x: prev.x + deltaX / zoom,
+      y: prev.y + deltaY / zoom
+    }));
+    
+    setLastMousePos({ x: event.clientX, y: event.clientY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    const delta = event.deltaY > 0 ? -0.1 : 0.1;
+    handleZoom(delta);
+  };
+
+  const resetView = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setSelectedLocation(null);
+  };
+
+  const handleLocationSelect = (location: any) => {
+    setSelectedLocation(location.id);
+    setSelectedFloor(location.floor_id);
+    
+    // Center the map on the selected location
+    const centerX = location.x * 600 + 100;
+    const centerY = location.y * 400 + 100;
+    setPan({ 
+      x: (400 - centerX) / 2, 
+      y: (300 - centerY) / 2 
+    });
+    setZoom(1.5);
   };
 
   return (
@@ -186,46 +238,76 @@ export const HospitalMap = () => {
               variant="outline"
               size="sm"
               onClick={() => handleZoom(-0.2)}
+              disabled={zoom <= 0.5}
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-mono">{Math.round(zoom * 100)}%</span>
+            <span className="text-sm font-mono min-w-[3rem] text-center">{Math.round(zoom * 100)}%</span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleZoom(0.2)}
+              disabled={zoom >= 3}
             >
               <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetView}
+              title="Reset view"
+            >
+              <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Floor selector */}
-        <div className="flex items-center gap-2">
-          <Layers className="h-4 w-4" />
-          <span className="text-sm font-medium">Floor:</span>
-          {floors.map((floor) => (
-            <Button
-              key={floor.id}
-              variant={selectedFloor === floor.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedFloor(floor.id)}
-            >
-              {floor.name}
-            </Button>
-          ))}
+        {/* Search and Controls */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Search Location</label>
+            <UniversalSearch 
+              onLocationSelect={handleLocationSelect}
+              placeholder="Search rooms, departments..."
+              showCategories={false}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Floor</label>
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4" />
+              {floors.map((floor) => (
+                <Button
+                  key={floor.id}
+                  variant={selectedFloor === floor.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedFloor(floor.id)}
+                >
+                  {floor.name}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Interactive canvas */}
-        <div className="border rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="relative border rounded-lg overflow-hidden bg-gradient-to-br from-map-bg via-background to-map-bg shadow-map">
           <canvas
             ref={canvasRef}
             width={800}
             height={600}
-            className="cursor-pointer"
+            className={`w-full ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             onClick={handleCanvasClick}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onWheel={handleWheel}
           />
+          <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-md p-2 text-xs text-muted-foreground">
+            Drag to pan • Scroll to zoom • Click locations for details
+          </div>
         </div>
 
         {/* Legend */}

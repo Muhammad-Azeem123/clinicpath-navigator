@@ -8,6 +8,8 @@ import { MapPin, Navigation as NavigationIcon, Clock, Accessibility, Loader2, Se
 import { useNavigation, RouteResult } from "@/hooks/useNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { StepVisualization } from "@/components/StepVisualization";
+import { RouteVisualization } from "@/components/RouteVisualization";
+import { UniversalSearch } from "@/components/UniversalSearch";
 
 const Navigation = () => {
   const { locations, floors, loading, findRoute } = useNavigation();
@@ -109,10 +111,26 @@ const Navigation = () => {
         <p className="text-muted-foreground">Find your way around the hospital</p>
       </div>
 
+      {/* Universal Search */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-primary" />
+            Quick Search & Navigate
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <UniversalSearch 
+            placeholder="Search anything - rooms, departments, staff..."
+            showCategories={true}
+          />
+        </CardContent>
+      </Card>
+
       {/* Floor and Search Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Floor</label>
+          <label className="text-sm font-medium">Filter by Floor</label>
           <Select value={selectedFloor} onValueChange={setSelectedFloor}>
             <SelectTrigger>
               <SelectValue placeholder="Select floor" />
@@ -128,11 +146,11 @@ const Navigation = () => {
           </Select>
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium">Search Locations</label>
+          <label className="text-sm font-medium">Search Specific Locations</label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search rooms, departments..."
+              placeholder="Filter locations list..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -285,30 +303,14 @@ const Navigation = () => {
             </Card>
           </div>
 
-          {/* Enhanced Step-by-Step Directions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <NavigationIcon className="h-5 w-5 text-primary" />
-                Step-by-Step Directions
-              </CardTitle>
-              <CardDescription>
-                Detailed route from {(currentRoute as any).fromLocationName || currentRoute.from_location.name} to {(currentRoute as any).toLocationName || currentRoute.to_location.name}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                {currentRoute.steps.map((step, index) => (
-                  <StepVisualization 
-                    key={index}
-                    step={step}
-                    index={index}
-                    isLast={index === currentRoute.steps.length - 1}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Enhanced Route Visualization */}
+          <RouteVisualization 
+            route={currentRoute}
+            onStepClick={(stepIndex) => {
+              console.log(`Clicked on step ${stepIndex + 1}`);
+              // Could highlight the step or show additional details
+            }}
+          />
         </>
       )}
     </div>
