@@ -86,31 +86,103 @@ export const RouteVisualization = ({ route, onStepClick }: RouteVisualizationPro
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = 400;
-    canvas.height = 300;
+    canvas.width = 500;
+    canvas.height = 400;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Background gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, 'hsl(210, 16%, 98%)');
-    gradient.addColorStop(1, 'hsl(214, 32%, 97%)');
-    ctx.fillStyle = gradient;
+    // Google Maps-style background
+    const mapGradient = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, 0,
+      canvas.width / 2, canvas.height / 2, canvas.width / 2
+    );
+    mapGradient.addColorStop(0, '#f8fafc');
+    mapGradient.addColorStop(0.5, '#e2e8f0');
+    mapGradient.addColorStop(1, '#cbd5e1');
+    ctx.fillStyle = mapGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw route path
-    ctx.strokeStyle = 'hsl(214, 84%, 46%)';
-    ctx.lineWidth = 4;
+    // Draw streets grid (Google Maps style)
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1;
+    
+    // Horizontal streets
+    for (let i = 0; i < 6; i++) {
+      const y = (i + 1) * (canvas.height / 7);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+    
+    // Vertical streets
+    for (let i = 0; i < 8; i++) {
+      const x = (i + 1) * (canvas.width / 9);
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+
+    // Draw buildings/blocks
+    ctx.fillStyle = '#e2e8f0';
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 1;
+    
+    // Hospital building
+    const hospitalX = canvas.width * 0.4;
+    const hospitalY = canvas.height * 0.4;
+    const hospitalW = canvas.width * 0.2;
+    const hospitalH = canvas.height * 0.2;
+    
+    ctx.fillRect(hospitalX, hospitalY, hospitalW, hospitalH);
+    ctx.strokeRect(hospitalX, hospitalY, hospitalW, hospitalH);
+    
+    // Hospital label
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Hospital', hospitalX + hospitalW/2, hospitalY + hospitalH/2);
+
+    // Draw other buildings
+    const buildings = [
+      { x: 50, y: 50, w: 80, h: 60, label: 'Parking' },
+      { x: 350, y: 80, w: 90, h: 50, label: 'Mall' },
+      { x: 80, y: 280, w: 70, h: 80, label: 'Park' },
+      { x: 350, y: 300, w: 100, h: 70, label: 'Offices' }
+    ];
+    
+    ctx.fillStyle = '#f1f5f9';
+    buildings.forEach(building => {
+      ctx.fillRect(building.x, building.y, building.w, building.h);
+      ctx.strokeRect(building.x, building.y, building.w, building.h);
+      
+      ctx.fillStyle = '#475569';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(building.label, building.x + building.w/2, building.y + building.h/2);
+      ctx.fillStyle = '#f1f5f9';
+    });
+
+    // Draw the route path with Google Maps style
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    
+    // Add shadow to route
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
 
     ctx.beginPath();
     routeSteps.forEach((step, index) => {
       if (!step.coordinates) return;
       
-      const x = (step.coordinates.x * 0.8 + 0.1) * canvas.width;
-      const y = (step.coordinates.y * 0.8 + 0.1) * canvas.height;
+      const x = (step.coordinates.x * 0.7 + 0.15) * canvas.width;
+      const y = (step.coordinates.y * 0.7 + 0.15) * canvas.height;
       
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -120,37 +192,80 @@ export const RouteVisualization = ({ route, onStepClick }: RouteVisualizationPro
     });
     ctx.stroke();
 
-    // Draw waypoints
+    // Reset shadow
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    // Draw waypoints with Google Maps style
     routeSteps.forEach((step, index) => {
       if (!step.coordinates) return;
       
-      const x = (step.coordinates.x * 0.8 + 0.1) * canvas.width;
-      const y = (step.coordinates.y * 0.8 + 0.1) * canvas.height;
+      const x = (step.coordinates.x * 0.7 + 0.15) * canvas.width;
+      const y = (step.coordinates.y * 0.7 + 0.15) * canvas.height;
 
-      // Waypoint circle
+      // Outer circle (white border)
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, 2 * Math.PI);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Inner circle
       ctx.beginPath();
       ctx.arc(x, y, 8, 0, 2 * Math.PI);
       
       if (step.type === 'start') {
-        ctx.fillStyle = 'hsl(142, 71%, 45%)';
+        ctx.fillStyle = '#10b981';
       } else if (step.type === 'destination') {
-        ctx.fillStyle = 'hsl(0, 84%, 60%)';
+        ctx.fillStyle = '#ef4444';
       } else {
-        ctx.fillStyle = 'hsl(214, 84%, 46%)';
+        ctx.fillStyle = '#3b82f6';
       }
       ctx.fill();
 
-      // White border
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Step number
+      // Step label
       ctx.fillStyle = 'white';
       ctx.font = 'bold 10px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText((index + 1).toString(), x, y + 3);
+      
+      if (step.type === 'start') {
+        ctx.fillText('A', x, y + 3);
+      } else if (step.type === 'destination') {
+        ctx.fillText('B', x, y + 3);
+      } else {
+        ctx.fillText((index + 1).toString(), x, y + 3);
+      }
     });
+
+    // Add compass rose
+    const compassX = canvas.width - 40;
+    const compassY = 40;
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.beginPath();
+    ctx.arc(compassX, compassY, 20, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // North arrow
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY - 12);
+    ctx.lineTo(compassX - 4, compassY - 4);
+    ctx.lineTo(compassX + 4, compassY - 4);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('N', compassX, compassY + 15);
   };
 
   const getStepIcon = (type: RouteStep['type']) => {

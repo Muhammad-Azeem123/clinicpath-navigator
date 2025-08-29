@@ -1,9 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { MapPin, Search, Zap, Navigation } from "lucide-react";
 import { HospitalMap } from "@/components/HospitalMap";
+import { UniversalSearch } from "@/components/UniversalSearch";
 
 const Map = () => {
   return (
@@ -26,15 +25,11 @@ const Map = () => {
                 Find Location
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="search">Search for a department or room</Label>
-                <Input id="search" placeholder="e.g. Emergency Room, Cardiology" />
-              </div>
-              <Button className="w-full">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
+            <CardContent>
+              <UniversalSearch 
+                placeholder="Search departments, rooms, staff..."
+                showCategories={true}
+              />
             </CardContent>
           </Card>
 

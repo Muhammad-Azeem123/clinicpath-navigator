@@ -18,7 +18,7 @@ const Navigation = () => {
   const [currentRoute, setCurrentRoute] = useState<RouteResult | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  
   const { toast } = useToast();
 
   // Check for stored route from other pages
@@ -95,10 +95,7 @@ const Navigation = () => {
   // Get filtered locations for display
   const filteredLocations = locations.filter(location => {
     const matchesFloor = !selectedFloor || selectedFloor === "all" || location.floor_id === selectedFloor;
-    const matchesSearch = !searchQuery || 
-      location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (location.room && location.room.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesFloor && matchesSearch;
+    return matchesFloor;
   });
 
   return (
@@ -127,9 +124,9 @@ const Navigation = () => {
         </CardContent>
       </Card>
 
-      {/* Floor and Search Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      {/* Floor Controls */}
+      <div className="flex justify-center">
+        <div className="w-full md:w-1/2 space-y-2">
           <label className="text-sm font-medium">Filter by Floor</label>
           <Select value={selectedFloor} onValueChange={setSelectedFloor}>
             <SelectTrigger>
@@ -144,18 +141,6 @@ const Navigation = () => {
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Search Specific Locations</label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Filter locations list..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
         </div>
       </div>
 
