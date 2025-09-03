@@ -109,6 +109,36 @@ export type Database = {
           },
         ]
       }
+      maps: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          is_current: boolean
+          name: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          is_current?: boolean
+          name: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          is_current?: boolean
+          name?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       routes: {
         Row: {
           accessibility: string
@@ -162,7 +192,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      set_current_map: {
+        Args: { map_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
