@@ -1,1 +1,7 @@
 project_id = "dagiygtjfpwdslngihlj"
+
+[functions.maps-upload]
+verify_jwt = false
+
+[functions.maps-current]
+verify_jwt = false

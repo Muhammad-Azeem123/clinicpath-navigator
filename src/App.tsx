@@ -10,7 +10,7 @@ import Index from "./pages/Index";
 import Map from "./pages/Map";
 import Departments from "./pages/Departments";
 import Navigation from "./pages/Navigation";
-
+import Admin from "./pages/Admin";
 import Staff from "./pages/Staff";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
@@ -39,7 +39,7 @@ const App = () => (
                   <Route path="/map" element={<Map />} />
                   <Route path="/departments" element={<Departments />} />
                   <Route path="/navigation" element={<Navigation />} />
-                  
+                  <Route path="/admin" element={<Admin />} />
                   <Route path="/staff" element={<Staff />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/help" element={<Help />} />

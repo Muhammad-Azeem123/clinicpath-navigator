@@ -32,6 +32,7 @@ const items = [
   { title: "Staff", url: "/staff", icon: Users },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Help", url: "/help", icon: HelpCircle },
+  { title: "Admin", url: "/admin", icon: Settings },
 ];
 
 export function AppSidebar() {
