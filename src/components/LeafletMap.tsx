@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Graph } from 'graphlib';
@@ -13,12 +13,17 @@ interface LeafletMapProps {
   onLocationSelect?: (location: MapLocation) => void;
 }
 
-export const LeafletMap = ({ 
+export interface LeafletMapRef {
+  showPath: (fromId: string, toId: string) => void;
+  clearPath: () => void;
+}
+
+export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(({ 
   mapData, 
   selectedFloor, 
   onFloorChange, 
   onLocationSelect 
-}: LeafletMapProps) => {
+}, ref) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup>(new L.LayerGroup());
@@ -174,39 +179,86 @@ export const LeafletMap = ({
     // Create graph using graphlib
     const graph = new Graph({ directed: false });
     
-    // Add nodes
+    // Add nodes with location data
     currentFloor.locations.forEach(loc => {
       graph.setNode(loc.id, loc);
     });
     
-    // Add edges
+    // Add edges with weights (distances)
     currentFloor.connections.forEach(conn => {
-      graph.setEdge(conn.from, conn.to, conn.distance || 1);
+      const weight = conn.distance || calculateDistance(
+        currentFloor.locations.find(l => l.id === conn.from)!,
+        currentFloor.locations.find(l => l.id === conn.to)!
+      );
+      graph.setEdge(conn.from, conn.to, weight);
     });
 
-    // Simple pathfinding (in a real implementation, you'd use A* or Dijkstra)
-    // This is a basic BFS for demonstration
-    const queue = [[fromId]];
-    const visited = new Set([fromId]);
+    // Implement Dijkstra's algorithm for shortest path
+    return dijkstraPath(graph, fromId, toId);
+  };
+
+  const calculateDistance = (loc1: MapLocation, loc2: MapLocation): number => {
+    return Math.sqrt(Math.pow(loc2.x - loc1.x, 2) + Math.pow(loc2.y - loc1.y, 2));
+  };
+
+  const dijkstraPath = (graph: Graph, start: string, end: string): MapLocation[] => {
+    const distances: Record<string, number> = {};
+    const previous: Record<string, string | null> = {};
+    const unvisited = new Set<string>();
     
-    while (queue.length > 0) {
-      const path = queue.shift()!;
-      const current = path[path.length - 1];
+    // Initialize distances
+    graph.nodes().forEach(node => {
+      distances[node] = node === start ? 0 : Infinity;
+      previous[node] = null;
+      unvisited.add(node);
+    });
+
+    while (unvisited.size > 0) {
+      // Find unvisited node with minimum distance
+      let current: string | null = null;
+      let minDistance = Infinity;
       
-      if (current === toId) {
-        return path.map(id => currentFloor.locations.find(l => l.id === id)!).filter(Boolean);
-      }
-      
-      const neighbors = graph.neighbors(current) || [];
-      for (const neighbor of neighbors) {
-        if (!visited.has(neighbor)) {
-          visited.add(neighbor);
-          queue.push([...path, neighbor]);
+      unvisited.forEach(node => {
+        if (distances[node] < minDistance) {
+          minDistance = distances[node];
+          current = node;
         }
-      }
+      });
+
+      if (!current || current === end) break;
+      if (distances[current] === Infinity) break; // No path exists
+
+      unvisited.delete(current);
+
+      // Update distances to neighbors
+      const neighbors = graph.neighbors(current) || [];
+      neighbors.forEach(neighbor => {
+        if (!unvisited.has(neighbor)) return;
+        
+        const edge = graph.edge(current!, neighbor);
+        const weight = typeof edge === 'object' ? edge.weight || edge : edge || 1;
+        const tentativeDistance = distances[current!] + weight;
+        
+        if (tentativeDistance < distances[neighbor]) {
+          distances[neighbor] = tentativeDistance;
+          previous[neighbor] = current;
+        }
+      });
     }
+
+    // Reconstruct path
+    if (previous[end] === null && start !== end) return []; // No path found
+
+    const path: string[] = [];
+    let current: string | null = end;
     
-    return [];
+    while (current !== null) {
+      path.unshift(current);
+      current = previous[current];
+    }
+
+    // Convert node IDs to MapLocation objects
+    return path.map(id => currentFloor!.locations.find(l => l.id === id)!).filter(Boolean);
   };
 
   const showPath = (fromId: string, toId: string) => {
@@ -216,23 +268,38 @@ export const LeafletMap = ({
     // Clear existing paths
     pathRef.current.clearLayers();
     
-    // Draw path
+    // Draw path with animation
     const pathCoords = path.map(loc => [loc.y, loc.x] as L.LatLngTuple);
     const polyline = L.polyline(pathCoords, {
-      color: 'hsl(var(--destructive))',
-      weight: 4,
-      opacity: 0.8
+      color: 'hsl(var(--primary))',
+      weight: 5,
+      opacity: 0.9,
+      dashArray: '10, 5',
+      className: 'animate-pulse'
     });
     pathRef.current.addLayer(polyline);
 
-    // Add markers for start and end
+    // Add animated markers for start and end
     if (path[0]) {
       const startMarker = L.marker([path[0].y, path[0].x], {
         icon: L.divIcon({
-          html: '<div style="background: green; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold;">S</div>',
+          html: `<div style="
+            background: hsl(var(--primary)); 
+            color: white; 
+            border-radius: 50%; 
+            width: 28px; 
+            height: 28px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+          ">S</div>`,
           className: '',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
         })
       });
       pathRef.current.addLayer(startMarker);
@@ -241,15 +308,64 @@ export const LeafletMap = ({
     if (path[path.length - 1]) {
       const endMarker = L.marker([path[path.length - 1].y, path[path.length - 1].x], {
         icon: L.divIcon({
-          html: '<div style="background: red; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold;">E</div>',
+          html: `<div style="
+            background: hsl(var(--destructive)); 
+            color: white; 
+            border-radius: 50%; 
+            width: 28px; 
+            height: 28px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+          ">E</div>`,
           className: '',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
         })
       });
       pathRef.current.addLayer(endMarker);
     }
+
+    // Fit map to path bounds with padding
+    if (pathCoords.length > 0) {
+      const bounds = L.latLngBounds(pathCoords);
+      leafletMapRef.current?.fitBounds(bounds, { padding: [20, 20] });
+    }
   };
+
+  const clearPath = () => {
+    pathRef.current.clearLayers();
+    // Re-render the current floor connections
+    if (currentFloor) {
+      currentFloor.connections.forEach(connection => {
+        const fromLoc = currentFloor.locations.find(l => l.id === connection.from);
+        const toLoc = currentFloor.locations.find(l => l.id === connection.to);
+        
+        if (fromLoc && toLoc) {
+          const polyline = L.polyline([
+            [fromLoc.y, fromLoc.x],
+            [toLoc.y, toLoc.x]
+          ], {
+            color: 'hsl(var(--primary))',
+            weight: 2,
+            opacity: 0.6,
+            dashArray: '5, 5'
+          });
+          pathRef.current.addLayer(polyline);
+        }
+      });
+    }
+  };
+
+  // Expose methods through ref
+  useImperativeHandle(ref, () => ({
+    showPath,
+    clearPath
+  }));
 
   const zoomIn = () => leafletMapRef.current?.zoomIn();
   const zoomOut = () => leafletMapRef.current?.zoomOut();
@@ -294,4 +410,4 @@ export const LeafletMap = ({
       )}
     </div>
   );
-};
+});

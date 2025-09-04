@@ -6,13 +6,15 @@ import { MapPin, Navigation, Layers, ZoomIn, ZoomOut, RotateCcw } from "lucide-r
 import { useNavigation } from "@/hooks/useNavigation";
 import { UniversalSearch } from "@/components/UniversalSearch";
 import { useMapData } from "@/hooks/useMapData";
-import { LeafletMap } from "@/components/LeafletMap";
+import { LeafletMap, LeafletMapRef } from "@/components/LeafletMap";
+import { PathfindingControls } from "@/components/PathfindingControls";
 
 export const HospitalMap = () => {
   const { locations, floors } = useNavigation();
   const { mapData, loading } = useMapData();
   const [selectedFloor, setSelectedFloor] = useState<string>("ground-floor");
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const mapRef = useRef<LeafletMapRef>(null);
 
   const handleLocationSelect = (location: any) => {
     setSelectedLocation(location);
@@ -61,8 +63,17 @@ export const HospitalMap = () => {
           />
         </div>
 
+        {/* PathfindingControls */}
+        <PathfindingControls
+          mapData={mapData}
+          selectedFloor={selectedFloor}
+          onShowPath={(fromId, toId) => mapRef.current?.showPath(fromId, toId)}
+          onClearPath={() => mapRef.current?.clearPath()}
+        />
+
         {/* Leaflet Map */}
         <LeafletMap 
+          ref={mapRef}
           mapData={mapData}
           selectedFloor={selectedFloor}
           onFloorChange={setSelectedFloor}
