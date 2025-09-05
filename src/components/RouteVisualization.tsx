@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
-import { MapPin, Navigation, Clock, Route as RouteIcon } from "lucide-react";
+import { MapPin, Navigation, Clock, Route as RouteIcon, ArrowRight, ArrowUp, ArrowUpDown, CheckCircle, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface RouteStep {
   location: string;
@@ -23,8 +23,6 @@ interface RouteVisualizationProps {
 }
 
 export const RouteVisualization = ({ route, onStepClick }: RouteVisualizationProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const parseSteps = (steps: string[]): RouteStep[] => {
     return steps.map((step, index) => {
       const lowerStep = step.toLowerCase();
@@ -65,290 +63,161 @@ export const RouteVisualization = ({ route, onStepClick }: RouteVisualizationPro
         distance,
         duration,
         type,
-        coordinates: {
-          x: route.from_location.x + (route.to_location.x - route.from_location.x) * (index / (steps.length - 1)),
-          y: route.from_location.y + (route.to_location.y - route.from_location.y) * (index / (steps.length - 1))
-        }
       };
     });
   };
 
   const routeSteps = parseSteps(route.steps);
 
-  useEffect(() => {
-    drawRoute();
-  }, [route]);
-
-  const drawRoute = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = 500;
-    canvas.height = 400;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Google Maps-style background
-    const mapGradient = ctx.createRadialGradient(
-      canvas.width / 2, canvas.height / 2, 0,
-      canvas.width / 2, canvas.height / 2, canvas.width / 2
-    );
-    mapGradient.addColorStop(0, '#f8fafc');
-    mapGradient.addColorStop(0.5, '#e2e8f0');
-    mapGradient.addColorStop(1, '#cbd5e1');
-    ctx.fillStyle = mapGradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw streets grid (Google Maps style)
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 1;
-    
-    // Horizontal streets
-    for (let i = 0; i < 6; i++) {
-      const y = (i + 1) * (canvas.height / 7);
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-    
-    // Vertical streets
-    for (let i = 0; i < 8; i++) {
-      const x = (i + 1) * (canvas.width / 9);
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-
-    // Draw buildings/blocks
-    ctx.fillStyle = '#e2e8f0';
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 1;
-    
-    // Hospital building
-    const hospitalX = canvas.width * 0.4;
-    const hospitalY = canvas.height * 0.4;
-    const hospitalW = canvas.width * 0.2;
-    const hospitalH = canvas.height * 0.2;
-    
-    ctx.fillRect(hospitalX, hospitalY, hospitalW, hospitalH);
-    ctx.strokeRect(hospitalX, hospitalY, hospitalW, hospitalH);
-    
-    // Hospital label
-    ctx.fillStyle = '#1e293b';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Hospital', hospitalX + hospitalW/2, hospitalY + hospitalH/2);
-
-    // Draw other buildings
-    const buildings = [
-      { x: 50, y: 50, w: 80, h: 60, label: 'Parking' },
-      { x: 350, y: 80, w: 90, h: 50, label: 'Mall' },
-      { x: 80, y: 280, w: 70, h: 80, label: 'Park' },
-      { x: 350, y: 300, w: 100, h: 70, label: 'Offices' }
-    ];
-    
-    ctx.fillStyle = '#f1f5f9';
-    buildings.forEach(building => {
-      ctx.fillRect(building.x, building.y, building.w, building.h);
-      ctx.strokeRect(building.x, building.y, building.w, building.h);
-      
-      ctx.fillStyle = '#475569';
-      ctx.font = '10px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(building.label, building.x + building.w/2, building.y + building.h/2);
-      ctx.fillStyle = '#f1f5f9';
-    });
-
-    // Draw the route path with Google Maps style
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    
-    // Add shadow to route
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-
-    ctx.beginPath();
-    routeSteps.forEach((step, index) => {
-      if (!step.coordinates) return;
-      
-      const x = (step.coordinates.x * 0.7 + 0.15) * canvas.width;
-      const y = (step.coordinates.y * 0.7 + 0.15) * canvas.height;
-      
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-    ctx.stroke();
-
-    // Reset shadow
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-
-    // Draw waypoints with Google Maps style
-    routeSteps.forEach((step, index) => {
-      if (!step.coordinates) return;
-      
-      const x = (step.coordinates.x * 0.7 + 0.15) * canvas.width;
-      const y = (step.coordinates.y * 0.7 + 0.15) * canvas.height;
-
-      // Outer circle (white border)
-      ctx.beginPath();
-      ctx.arc(x, y, 12, 0, 2 * Math.PI);
-      ctx.fillStyle = 'white';
-      ctx.fill();
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Inner circle
-      ctx.beginPath();
-      ctx.arc(x, y, 8, 0, 2 * Math.PI);
-      
-      if (step.type === 'start') {
-        ctx.fillStyle = '#10b981';
-      } else if (step.type === 'destination') {
-        ctx.fillStyle = '#ef4444';
-      } else {
-        ctx.fillStyle = '#3b82f6';
-      }
-      ctx.fill();
-
-      // Step label
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 10px Arial';
-      ctx.textAlign = 'center';
-      
-      if (step.type === 'start') {
-        ctx.fillText('A', x, y + 3);
-      } else if (step.type === 'destination') {
-        ctx.fillText('B', x, y + 3);
-      } else {
-        ctx.fillText((index + 1).toString(), x, y + 3);
-      }
-    });
-
-    // Add compass rose
-    const compassX = canvas.width - 40;
-    const compassY = 40;
-    
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.beginPath();
-    ctx.arc(compassX, compassY, 20, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    
-    // North arrow
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.moveTo(compassX, compassY - 12);
-    ctx.lineTo(compassX - 4, compassY - 4);
-    ctx.lineTo(compassX + 4, compassY - 4);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.fillStyle = '#1e293b';
-    ctx.font = 'bold 8px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('N', compassX, compassY + 15);
-  };
-
   const getStepIcon = (type: RouteStep['type']) => {
     switch (type) {
-      case 'start': return <MapPin className="h-4 w-4 text-success" />;
-      case 'destination': return <MapPin className="h-4 w-4 text-destructive" />;
-      case 'turn': return <Navigation className="h-4 w-4 text-primary" />;
-      case 'stairs': return <RouteIcon className="h-4 w-4 text-warning" />;
-      case 'elevator': return <RouteIcon className="h-4 w-4 text-info" />;
-      default: return <Navigation className="h-4 w-4 text-primary" />;
+      case 'start': return <MapPin className="h-5 w-5 text-emerald-500" />;
+      case 'destination': return <CheckCircle className="h-5 w-5 text-emerald-600" />;
+      case 'turn': return <RotateCcw className="h-5 w-5 text-blue-500" />;
+      case 'stairs': return <ArrowUp className="h-5 w-5 text-orange-500" />;
+      case 'elevator': return <ArrowUpDown className="h-5 w-5 text-purple-500" />;
+      default: return <ArrowRight className="h-5 w-5 text-blue-500" />;
+    }
+  };
+
+  const getStepColor = (type: RouteStep['type']) => {
+    switch (type) {
+      case 'start': return 'from-emerald-50 to-emerald-100 border-emerald-200';
+      case 'destination': return 'from-emerald-50 to-emerald-100 border-emerald-200';
+      case 'turn': return 'from-blue-50 to-blue-100 border-blue-200';
+      case 'stairs': return 'from-orange-50 to-orange-100 border-orange-200';
+      case 'elevator': return 'from-purple-50 to-purple-100 border-purple-200';
+      default: return 'from-gray-50 to-gray-100 border-gray-200';
+    }
+  };
+
+  const getStepBadgeColor = (type: RouteStep['type']) => {
+    switch (type) {
+      case 'start': return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200';
+      case 'destination': return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200';
+      case 'turn': return 'bg-blue-100 text-blue-700 hover:bg-blue-200';
+      case 'stairs': return 'bg-orange-100 text-orange-700 hover:bg-orange-200';
+      case 'elevator': return 'bg-purple-100 text-purple-700 hover:bg-purple-200';
+      default: return 'bg-gray-100 text-gray-700 hover:bg-gray-200';
     }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Visual Route Map */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <RouteIcon className="h-5 w-5 text-primary" />
-            Route Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-map-bg rounded-lg p-4 shadow-map">
-            <canvas
-              ref={canvasRef}
-              className="w-full h-auto border border-border rounded-md"
-              style={{ maxHeight: '300px' }}
-            />
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+        <CardTitle className="flex items-center gap-3 text-xl">
+          <div className="p-2 rounded-full bg-primary/10">
+            <Navigation className="h-6 w-6 text-primary" />
           </div>
-          <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span>{route.estimated_time}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <RouteIcon className="h-4 w-4" />
-              <span>{route.distance}m total</span>
-            </div>
+          Your Route to {route.to_location.name}
+        </CardTitle>
+        <div className="flex items-center gap-6 mt-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span className="font-medium">{route.estimated_time}</span>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Step-by-Step List */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Navigation className="h-5 w-5 text-primary" />
-            Detailed Directions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <RouteIcon className="h-4 w-4" />
+            <span className="font-medium">{route.distance}m total</span>
+          </div>
+          <Badge variant="secondary" className="ml-auto">
+            {routeSteps.length} steps
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="relative">
+          {/* Progress Line */}
+          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-400 via-blue-400 to-emerald-500"></div>
+          
+          <div className="space-y-0">
             {routeSteps.map((step, index) => (
               <div
                 key={index}
-                className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border hover:bg-accent/5 transition-colors cursor-pointer"
+                className={`relative p-6 transition-all duration-300 hover:bg-gradient-to-r ${getStepColor(step.type)} cursor-pointer group animate-fade-in border-l-4 border-transparent hover:border-l-primary/20`}
                 onClick={() => onStepClick?.(index)}
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  {getStepIcon(step.type)}
+                {/* Step Number Circle */}
+                <div className="absolute left-5 transform -translate-x-1/2">
+                  <div className="w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                    {index === 0 ? (
+                      <span className="text-xs font-bold text-emerald-600">A</span>
+                    ) : index === routeSteps.length - 1 ? (
+                      <span className="text-xs font-bold text-emerald-600">B</span>
+                    ) : (
+                      <span className="text-xs font-bold text-gray-600">{index + 1}</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-medium text-sm">Step {index + 1}</h4>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>{step.distance}</span>
-                      <span>{step.duration}</span>
+
+                {/* Step Content */}
+                <div className="ml-8 flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="flex-shrink-0 p-2 rounded-lg bg-white/50 group-hover:bg-white/80 transition-colors">
+                        {getStepIcon(step.type)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-gray-900 group-hover:text-gray-800">
+                            {step.type === 'start' ? 'Start your journey' : 
+                             step.type === 'destination' ? 'You have arrived!' : 
+                             `Step ${index + 1}`}
+                          </h3>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${getStepBadgeColor(step.type)}`}
+                          >
+                            {step.type}
+                          </Badge>
+                        </div>
+                        <p className="text-gray-700 font-medium mb-1 group-hover:text-gray-800">
+                          {step.instruction}
+                        </p>
+                        
+                        {/* Step-specific hints */}
+                        {step.type === 'turn' && (
+                          <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 inline-block">
+                            💡 Look for directional signs or landmarks
+                          </p>
+                        )}
+                        {step.type === 'stairs' && (
+                          <p className="text-xs text-orange-600 bg-orange-50 rounded px-2 py-1 inline-block">
+                            🚶 Take your time and use handrails
+                          </p>
+                        )}
+                        {step.type === 'elevator' && (
+                          <p className="text-xs text-purple-600 bg-purple-50 rounded px-2 py-1 inline-block">
+                            🛗 Check floor indicators before entering
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm text-foreground">{step.instruction}</p>
-                  {step.type === 'turn' && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Look for signs or landmarks at the intersection
-                    </p>
-                  )}
+                  
+                  {/* Distance & Time */}
+                  <div className="flex flex-col items-end text-right ml-4">
+                    <div className="text-sm font-semibold text-gray-900 mb-1">
+                      {step.distance}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {step.duration}
+                    </div>
+                  </div>
                 </div>
+
+                {/* Connecting Arrow */}
+                {index < routeSteps.length - 1 && (
+                  <div className="absolute left-8 bottom-0 transform -translate-x-1/2 translate-y-2">
+                    <ArrowRight className="h-4 w-4 text-gray-400 rotate-90" />
+                  </div>
+                )}
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
