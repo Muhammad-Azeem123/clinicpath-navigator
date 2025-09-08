@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineStorage } from '@/utils/offlineStorage';
 import { useToast } from '@/hooks/use-toast';
 
 export interface MapLocation {
@@ -39,65 +40,64 @@ export const useMapData = () => {
     try {
       setLoading(true);
       
-      // Check if we have cached data
-      const cachedData = localStorage.getItem('hospital-map-data');
-      const cachedTimestamp = localStorage.getItem('hospital-map-timestamp');
-      
-      if (cachedData && cachedTimestamp) {
-        const cached = JSON.parse(cachedData);
-        setMapData(cached);
-        setLastUpdated(cachedTimestamp);
-      }
-
-      // Fetch current map from API
       const { data, error } = await supabase.functions.invoke('maps-current');
       
       if (error) {
         console.error('Error fetching map data:', error);
-        if (!cachedData) {
-          toast({
-            title: "Error",
-            description: "Failed to load map data. Using sample data.",
-            variant: "destructive",
-          });
-          setMapData(getSampleMapData());
+        // Try offline storage first
+        const offlineData = await offlineStorage.getMapData();
+        if (offlineData) {
+          setMapData(offlineData);
+          setLastUpdated(new Date().toISOString());
+          return;
         }
+        
+        // Fallback to sample data on error
+        const fallbackData = getSampleMapData();
+        setMapData(fallbackData);
+        setLastUpdated(new Date().toISOString());
+        
+        // Cache the fallback data
+        await offlineStorage.storeMapData(fallbackData);
         return;
       }
 
-      if (data.map) {
-        const newMapData = data.map.data as MapData;
-        const newTimestamp = data.lastUpdated;
+      if (data?.map) {
+        console.log('Map data received:', data.map.name);
+        setMapData(data.map);
+        setLastUpdated(data.lastUpdated || new Date().toISOString());
         
-        // Update if this is newer than cached data
-        if (!cachedTimestamp || new Date(newTimestamp) > new Date(cachedTimestamp)) {
-          setMapData(newMapData);
-          setLastUpdated(newTimestamp);
-          
-          // Cache the data
-          localStorage.setItem('hospital-map-data', JSON.stringify(newMapData));
-          localStorage.setItem('hospital-map-timestamp', newTimestamp);
-          
-          if (cachedData) {
-            toast({
-              title: "Map Updated",
-              description: "New map data has been loaded.",
-            });
-          }
-        }
-      } else if (!cachedData) {
-        // No map data available, use sample data
-        const sampleData = getSampleMapData();
-        setMapData(sampleData);
-        localStorage.setItem('hospital-map-data', JSON.stringify(sampleData));
-        localStorage.setItem('hospital-map-timestamp', new Date().toISOString());
+        // Store in offline storage
+        await offlineStorage.storeMapData(data.map);
+      } else {
+        console.log('No map data available, using sample data');
+        // Use sample data if no current map exists
+        const fallbackData = getSampleMapData();
+        setMapData(fallbackData);
+        setLastUpdated(new Date().toISOString());
+        
+        // Cache the sample data
+        await offlineStorage.storeMapData(fallbackData);
       }
-      
     } catch (error) {
-      console.error('Error in fetchMapData:', error);
-      if (!mapData) {
-        setMapData(getSampleMapData());
+      console.error('Failed to fetch map data:', error);
+      
+      // Try to load from offline storage
+      try {
+        const offlineData = await offlineStorage.getMapData();
+        if (offlineData) {
+          setMapData(offlineData);
+          setLastUpdated(new Date().toISOString());
+          return;
+        }
+      } catch (offlineError) {
+        console.error('Failed to load offline data:', offlineError);
       }
+
+      // Final fallback to sample data
+      const fallbackData = getSampleMapData();
+      setMapData(fallbackData);
+      setLastUpdated(new Date().toISOString());
     } finally {
       setLoading(false);
     }
