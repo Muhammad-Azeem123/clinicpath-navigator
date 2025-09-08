@@ -34,9 +34,14 @@ export const MapboxMap = forwardRef<MapboxMapRef, MapboxMapProps>(({
   useEffect(() => {
     const getMapboxToken = async () => {
       try {
-        const { data } = await supabase.functions.invoke('get-mapbox-token');
+        console.log('Attempting to fetch Mapbox token...');
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        console.log('Mapbox token response:', { data, error });
         if (data?.token) {
+          console.log('Setting Mapbox token:', data.token.substring(0, 10) + '...');
           setMapboxToken(data.token);
+        } else if (error) {
+          console.error('Error in token response:', error);
         }
       } catch (error) {
         console.error('Error fetching Mapbox token:', error);
