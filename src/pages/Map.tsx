@@ -3,13 +3,10 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Search, Zap, Navigation } from "lucide-react";
 import { HospitalMap } from "@/components/HospitalMap";
 import { UniversalSearch } from "@/components/UniversalSearch";
-import { OfflineMapNotice } from "@/components/OfflineMapNotice";
 
 const Map = () => {
   return (
     <div className="space-y-6">
-      <OfflineMapNotice />
-      
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold">Interactive Hospital Map</h1>
         <p className="text-muted-foreground">Navigate through our facility with ease</p>

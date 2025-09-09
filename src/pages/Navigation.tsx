@@ -10,17 +10,22 @@ import { useToast } from "@/hooks/use-toast";
 import { StepVisualization } from "@/components/StepVisualization";
 import { RouteVisualization } from "@/components/RouteVisualization";
 import { UniversalSearch } from "@/components/UniversalSearch";
-import { OfflineMapNotice } from "@/components/OfflineMapNotice";
+import { useSharedNavigation } from "@/hooks/useSharedNavigation";
 
 const Navigation = () => {
   const { locations, floors, loading, findRoute } = useNavigation();
-  const [fromLocation, setFromLocation] = useState<string>("");
-  const [toLocation, setToLocation] = useState<string>("");
   const [currentRoute, setCurrentRoute] = useState<RouteResult | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<string>("");
   
   const { toast } = useToast();
+  const { 
+    fromLocation, 
+    toLocation, 
+    setFromLocation, 
+    setToLocation, 
+    setActiveRoute 
+  } = useSharedNavigation();
 
   // Check for stored route from other pages
   useEffect(() => {
@@ -60,6 +65,7 @@ const Navigation = () => {
       const route = await findRoute(fromLocation, toLocation);
       if (route) {
         setCurrentRoute(route);
+        setActiveRoute(route); // Sync with shared state
         toast({
           title: "Route Found",
           description: `Found route from ${route.from_location.name} to ${route.to_location.name}`,
@@ -101,8 +107,6 @@ const Navigation = () => {
 
   return (
     <div className="space-y-6">
-      <OfflineMapNotice />
-      
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
           <MapPin className="h-8 w-8 text-primary" />
