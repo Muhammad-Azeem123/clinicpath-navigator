@@ -27,7 +27,16 @@ export const PathfindingControls = ({
   } = useSharedNavigation();
 
   const currentFloor = mapData?.floors.find(f => f.id === selectedFloor);
-  const locations = currentFloor?.locations || [];
+  const allLocations = currentFloor?.locations || [];
+  
+  // Apply same filtering logic as Navigation page
+  const startingPoints = allLocations.filter(loc => 
+    loc.type === 'start' || 
+    ['loc_reception', 'loc_cafeteria'].includes(loc.id)
+  );
+  
+  // All locations can be destinations (same as Navigation page)
+  const destinations = allLocations;
 
   // Sync with shared state
   useEffect(() => {
@@ -63,13 +72,13 @@ export const PathfindingControls = ({
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-green-600" />
                   <span className="truncate">
-                    {fromLocation ? locations.find(l => l.id === fromLocation)?.name : "Choose starting location"}
+                    {fromLocation ? allLocations.find(l => l.id === fromLocation)?.name : "Choose starting location"}
                   </span>
                 </div>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {locations.map((location) => (
+              {startingPoints.map((location) => (
                 <SelectItem key={location.id} value={location.id}>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-green-600" />
@@ -92,13 +101,13 @@ export const PathfindingControls = ({
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-red-600" />
                   <span className="truncate">
-                    {toLocation ? locations.find(l => l.id === toLocation)?.name : "Choose destination"}
+                    {toLocation ? allLocations.find(l => l.id === toLocation)?.name : "Choose destination"}
                   </span>
                 </div>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {locations.map((location) => (
+              {destinations.map((location) => (
                 <SelectItem key={location.id} value={location.id}>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-red-600" />
@@ -136,9 +145,9 @@ export const PathfindingControls = ({
         <div className="bg-primary/10 p-3 rounded-md border border-primary/20">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-primary font-medium">Route:</span>
-            <span>{locations.find(l => l.id === fromLocation)?.name}</span>
+            <span>{allLocations.find(l => l.id === fromLocation)?.name}</span>
             <span className="text-muted-foreground">→</span>
-            <span>{locations.find(l => l.id === toLocation)?.name}</span>
+            <span>{allLocations.find(l => l.id === toLocation)?.name}</span>
           </div>
         </div>
       )}
