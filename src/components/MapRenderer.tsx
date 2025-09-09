@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Map as MapIcon, Globe } from 'lucide-react';
@@ -7,7 +7,6 @@ import { LeafletMap, LeafletMapRef } from '@/components/LeafletMap';
 import { MapboxMap, MapboxMapRef } from '@/components/MapboxMap';
 import { PathfindingControls } from '@/components/PathfindingControls';
 import { UniversalSearch } from '@/components/UniversalSearch';
-import { useSharedNavigation } from '@/hooks/useSharedNavigation';
 
 interface MapRendererProps {
   mapData: MapData | null;
@@ -22,14 +21,6 @@ export const MapRenderer = ({ mapData, loading }: MapRendererProps) => {
   const [mapEngine, setMapEngine] = useState<MapEngine>('leaflet');
   const leafletMapRef = useRef<LeafletMapRef>(null);
   const mapboxMapRef = useRef<MapboxMapRef>(null);
-  const { fromLocation, toLocation, activeRoute } = useSharedNavigation();
-
-  // Sync with shared navigation state - show path when locations are set
-  useEffect(() => {
-    if (fromLocation && toLocation && fromLocation !== toLocation) {
-      handleShowPath(fromLocation, toLocation);
-    }
-  }, [fromLocation, toLocation]);
 
   const handleLocationSelect = (location: any) => {
     setSelectedLocation(location);

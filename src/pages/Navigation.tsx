@@ -22,33 +22,24 @@ const Navigation = () => {
   const { 
     fromLocation, 
     toLocation, 
-    activeRoute,
     setFromLocation, 
     setToLocation, 
     setActiveRoute 
   } = useSharedNavigation();
 
-  // Sync local route state with shared navigation state
-  useEffect(() => {
-    if (activeRoute) {
-      setCurrentRoute(activeRoute);
-    }
-  }, [activeRoute]);
-
-  // Check for stored route from other pages (legacy support)
+  // Check for stored route from other pages
   useEffect(() => {
     const storedRoute = sessionStorage.getItem('currentRoute');
     if (storedRoute) {
       try {
         const route = JSON.parse(storedRoute);
         setCurrentRoute(route);
-        setActiveRoute(route); // Sync with shared state
         sessionStorage.removeItem('currentRoute'); // Clean up
       } catch (error) {
         console.error('Failed to parse stored route:', error);
       }
     }
-  }, [setActiveRoute]);
+  }, []);
 
   const handleFindRoute = async () => {
     if (!fromLocation || !toLocation) {
@@ -99,11 +90,10 @@ const Navigation = () => {
     );
   }
 
-  // Filter locations for starting points (entrance points and common locations)
+  // Filter locations for starting points (those with type 'start' or commonly used ones)
   const startingPoints = locations.filter(loc => 
-    loc.type === 'entrance' || 
-    loc.type === 'reception' ||
-    ['reception', 'cafeteria', 'main-entrance'].includes(loc.id)
+    loc.type === 'start' || 
+    ['loc_reception', 'loc_cafeteria'].includes(loc.id)
   );
 
   // All locations can be destinations
