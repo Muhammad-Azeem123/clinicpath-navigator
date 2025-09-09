@@ -90,22 +90,21 @@ export const useNavigation = () => {
         };
       }
 
-      // If no predefined route exists, create a route using A* pathfinding
-      const path = await findPathAStar(fromId, toId);
-      if (path.length > 0) {
+      // If no predefined route exists, create a basic route using BFS pathfinding
+      const path = await findPathBFS(fromId, toId);
+      if (path) {
         const fromLocation = locations.find(l => l.id === fromId);
         const toLocation = locations.find(l => l.id === toId);
         
         if (fromLocation && toLocation) {
-          const totalDistance = calculatePathDistance(path);
           return {
             id: 'generated',
             from_location_id: fromId,
             to_location_id: toId,
-            distance: Math.round(totalDistance),
-            estimated_time: `${Math.ceil(totalDistance / 80)}-${Math.ceil(totalDistance / 60)} minutes`,
+            distance: path.length * 20, // Estimate 20m per step
+            estimated_time: `${Math.ceil(path.length * 0.5)}-${Math.ceil(path.length * 0.8)} minutes`,
             accessibility: 'Check individual locations',
-            steps: generateStepsFromPath(path.map(p => p.id)),
+            steps: generateStepsFromPath(path),
             from_location: fromLocation,
             to_location: toLocation,
           };
@@ -124,141 +123,51 @@ export const useNavigation = () => {
     }
   };
 
-  const findPathAStar = async (fromId: string, toId: string): Promise<Location[]> => {
+  const findPathBFS = async (fromId: string, toId: string): Promise<string[] | null> => {
     try {
-      // Use cached connections from sample data if offline, otherwise fetch from DB
-      let connections: any[] = [];
-      
-      try {
-        const { data, error } = await supabase
-          .from('location_connections')
-          .select('from_location_id, to_location_id');
-        
-        if (error) throw error;
-        connections = data || [];
-      } catch (error) {
-        console.warn('Failed to fetch connections, using sample data');
-        // Use sample connections from the map data
-        connections = [
-          { from_location_id: 'main-entrance', to_location_id: 'reception' },
-          { from_location_id: 'reception', to_location_id: 'emergency' },
-          { from_location_id: 'reception', to_location_id: 'pharmacy' },
-          { from_location_id: 'reception', to_location_id: 'elevator-gf' },
-          { from_location_id: 'elevator-gf', to_location_id: 'stairs-gf' },
-          { from_location_id: 'pharmacy', to_location_id: 'cafeteria' },
-          { from_location_id: 'elevator-gf', to_location_id: 'elevator-1f' },
-          { from_location_id: 'stairs-gf', to_location_id: 'stairs-1f' },
-          { from_location_id: 'elevator-1f', to_location_id: 'neurology' },
-          { from_location_id: 'elevator-1f', to_location_id: 'cardiology' },
-          { from_location_id: 'neurology', to_location_id: 'room-101' },
-          { from_location_id: 'cardiology', to_location_id: 'room-102' },
-        ];
-      }
+      // Fetch all connections
+      const { data: connections, error } = await supabase
+        .from('location_connections')
+        .select('from_location_id, to_location_id');
 
-      // Build graph for A* algorithm
-      const graph = new Map<string, { id: string; cost: number }[]>();
-      
-      locations.forEach(loc => {
-        graph.set(loc.id, []);
+      if (error) throw error;
+
+      // Build adjacency list
+      const graph: Record<string, string[]> = {};
+      connections?.forEach(conn => {
+        if (!graph[conn.from_location_id]) graph[conn.from_location_id] = [];
+        if (!graph[conn.to_location_id]) graph[conn.to_location_id] = [];
+        graph[conn.from_location_id].push(conn.to_location_id);
+        graph[conn.to_location_id].push(conn.from_location_id); // Bidirectional
       });
 
-      connections.forEach(conn => {
-        const fromLoc = locations.find(l => l.id === conn.from_location_id);
-        const toLoc = locations.find(l => l.id === conn.to_location_id);
-        
-        if (fromLoc && toLoc) {
-          const distance = Math.sqrt(
-            Math.pow(toLoc.x - fromLoc.x, 2) + Math.pow(toLoc.y - fromLoc.y, 2)
-          );
-          
-          graph.get(conn.from_location_id)?.push({ id: conn.to_location_id, cost: distance });
-          graph.get(conn.to_location_id)?.push({ id: conn.from_location_id, cost: distance });
-        }
-      });
+      // BFS to find shortest path
+      const queue = [[fromId]];
+      const visited = new Set([fromId]);
 
-      // A* implementation
-      const openSet = new Set<string>([fromId]);
-      const cameFrom = new Map<string, string>();
-      const gScore = new Map<string, number>();
-      const fScore = new Map<string, number>();
-
-      locations.forEach(loc => {
-        gScore.set(loc.id, Infinity);
-        fScore.set(loc.id, Infinity);
-      });
-
-      gScore.set(fromId, 0);
-      const startLoc = locations.find(l => l.id === fromId);
-      const endLoc = locations.find(l => l.id === toId);
-      
-      if (!startLoc || !endLoc) return [];
-      
-      fScore.set(fromId, heuristic(startLoc, endLoc));
-
-      while (openSet.size > 0) {
-        // Get node with lowest fScore
-        let current = '';
-        let lowestF = Infinity;
-        openSet.forEach(node => {
-          const f = fScore.get(node) || Infinity;
-          if (f < lowestF) {
-            lowestF = f;
-            current = node;
-          }
-        });
+      while (queue.length > 0) {
+        const path = queue.shift()!;
+        const current = path[path.length - 1];
 
         if (current === toId) {
-          // Reconstruct path
-          const path = [current];
-          while (cameFrom.has(current)) {
-            current = cameFrom.get(current)!;
-            path.unshift(current);
-          }
-          return path.map(id => locations.find(l => l.id === id)!).filter(Boolean);
+          return path;
         }
 
-        openSet.delete(current);
-        const neighbors = graph.get(current) || [];
-
-        neighbors.forEach(neighbor => {
-          const tentativeGScore = (gScore.get(current) || Infinity) + neighbor.cost;
-          
-          if (tentativeGScore < (gScore.get(neighbor.id) || Infinity)) {
-            cameFrom.set(neighbor.id, current);
-            gScore.set(neighbor.id, tentativeGScore);
-            
-            const neighborLoc = locations.find(l => l.id === neighbor.id);
-            if (neighborLoc) {
-              fScore.set(neighbor.id, tentativeGScore + heuristic(neighborLoc, endLoc));
-            }
-            
-            if (!openSet.has(neighbor.id)) {
-              openSet.add(neighbor.id);
+        if (graph[current]) {
+          for (const neighbor of graph[current]) {
+            if (!visited.has(neighbor)) {
+              visited.add(neighbor);
+              queue.push([...path, neighbor]);
             }
           }
-        });
+        }
       }
 
-      return []; // No path found
+      return null;
     } catch (error) {
-      console.error('Error in A* pathfinding:', error);
-      return [];
+      console.error('Error in pathfinding:', error);
+      return null;
     }
-  };
-
-  const heuristic = (loc1: Location, loc2: Location): number => {
-    // Manhattan distance for indoor navigation
-    return Math.abs(loc2.x - loc1.x) + Math.abs(loc2.y - loc1.y);
-  };
-
-  const calculatePathDistance = (path: Location[]): number => {
-    let distance = 0;
-    for (let i = 1; i < path.length; i++) {
-      const prev = path[i - 1];
-      const curr = path[i];
-      distance += Math.sqrt(Math.pow(curr.x - prev.x, 2) + Math.pow(curr.y - prev.y, 2));
-    }
-    return distance;
   };
 
   const generateStepsFromPath = (path: string[]): string[] => {
