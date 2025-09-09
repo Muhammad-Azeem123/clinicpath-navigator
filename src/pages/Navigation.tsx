@@ -22,24 +22,33 @@ const Navigation = () => {
   const { 
     fromLocation, 
     toLocation, 
+    activeRoute,
     setFromLocation, 
     setToLocation, 
     setActiveRoute 
   } = useSharedNavigation();
 
-  // Check for stored route from other pages
+  // Sync local route state with shared navigation state
+  useEffect(() => {
+    if (activeRoute) {
+      setCurrentRoute(activeRoute);
+    }
+  }, [activeRoute]);
+
+  // Check for stored route from other pages (legacy support)
   useEffect(() => {
     const storedRoute = sessionStorage.getItem('currentRoute');
     if (storedRoute) {
       try {
         const route = JSON.parse(storedRoute);
         setCurrentRoute(route);
+        setActiveRoute(route); // Sync with shared state
         sessionStorage.removeItem('currentRoute'); // Clean up
       } catch (error) {
         console.error('Failed to parse stored route:', error);
       }
     }
-  }, []);
+  }, [setActiveRoute]);
 
   const handleFindRoute = async () => {
     if (!fromLocation || !toLocation) {
