@@ -29,10 +29,11 @@ export const PathfindingControls = ({
   const currentFloor = mapData?.floors.find(f => f.id === selectedFloor);
   const allLocations = currentFloor?.locations || [];
   
-  // Apply same filtering logic as Navigation page
+  // Apply same filtering logic as Navigation page - fix to match actual data structure
   const startingPoints = allLocations.filter(loc => 
-    loc.type === 'start' || 
-    ['loc_reception', 'loc_cafeteria'].includes(loc.id)
+    loc.type === 'entrance' || 
+    loc.type === 'reception' ||
+    ['reception', 'cafeteria', 'main-entrance'].includes(loc.id)
   );
   
   // All locations can be destinations (same as Navigation page)

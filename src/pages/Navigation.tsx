@@ -99,10 +99,11 @@ const Navigation = () => {
     );
   }
 
-  // Filter locations for starting points (those with type 'start' or commonly used ones)
+  // Filter locations for starting points (entrance points and common locations)
   const startingPoints = locations.filter(loc => 
-    loc.type === 'start' || 
-    ['loc_reception', 'loc_cafeteria'].includes(loc.id)
+    loc.type === 'entrance' || 
+    loc.type === 'reception' ||
+    ['reception', 'cafeteria', 'main-entrance'].includes(loc.id)
   );
 
   // All locations can be destinations
