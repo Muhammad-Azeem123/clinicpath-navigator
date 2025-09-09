@@ -40,25 +40,52 @@ export const useMapData = () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase.functions.invoke('maps-current');
+      // Check if we're online first
+      const isOnline = navigator.onLine;
       
-      if (error) {
-        console.error('Error fetching map data:', error);
-        // Try offline storage first
+      if (!isOnline) {
+        console.log('Offline mode: Loading cached map data');
         const offlineData = await offlineStorage.getMapData();
         if (offlineData) {
           setMapData(offlineData);
           setLastUpdated(new Date().toISOString());
+          toast({
+            title: "Offline Mode",
+            description: "Using cached map data",
+          });
+          return;
+        }
+      }
+
+      // Try to fetch fresh data when online
+      const { data, error } = await supabase.functions.invoke('maps-current');
+      
+      if (error) {
+        console.error('Error fetching map data:', error);
+        
+        // Try offline storage as fallback
+        const offlineData = await offlineStorage.getMapData();
+        if (offlineData) {
+          setMapData(offlineData);
+          setLastUpdated(new Date().toISOString());
+          toast({
+            title: "Using Cached Data", 
+            description: "Could not fetch latest map data",
+          });
           return;
         }
         
-        // Fallback to sample data on error
+        // Final fallback to sample data
         const fallbackData = getSampleMapData();
         setMapData(fallbackData);
         setLastUpdated(new Date().toISOString());
         
-        // Cache the fallback data
+        // Cache the fallback data for offline use
         await offlineStorage.storeMapData(fallbackData);
+        toast({
+          title: "Using Sample Data",
+          description: "Map data cached for offline use",
+        });
         return;
       }
 
@@ -67,27 +94,37 @@ export const useMapData = () => {
         setMapData(data.map);
         setLastUpdated(data.lastUpdated || new Date().toISOString());
         
-        // Store in offline storage
+        // Always store in offline storage for future offline use
         await offlineStorage.storeMapData(data.map);
+        
+        if (!isOnline) {
+          toast({
+            title: "Data Updated",
+            description: "Map data synced and cached",
+          });
+        }
       } else {
         console.log('No map data available, using sample data');
-        // Use sample data if no current map exists
         const fallbackData = getSampleMapData();
         setMapData(fallbackData);
         setLastUpdated(new Date().toISOString());
         
-        // Cache the sample data
+        // Cache the sample data for offline use
         await offlineStorage.storeMapData(fallbackData);
       }
     } catch (error) {
       console.error('Failed to fetch map data:', error);
       
-      // Try to load from offline storage
+      // Try to load from offline storage as fallback
       try {
         const offlineData = await offlineStorage.getMapData();
         if (offlineData) {
           setMapData(offlineData);
           setLastUpdated(new Date().toISOString());
+          toast({
+            title: "Offline Mode",
+            description: "Using cached map data",
+          });
           return;
         }
       } catch (offlineError) {
@@ -98,6 +135,13 @@ export const useMapData = () => {
       const fallbackData = getSampleMapData();
       setMapData(fallbackData);
       setLastUpdated(new Date().toISOString());
+      
+      // Cache for future offline use
+      try {
+        await offlineStorage.storeMapData(fallbackData);
+      } catch (cacheError) {
+        console.error('Failed to cache fallback data:', cacheError);
+      }
     } finally {
       setLoading(false);
     }

@@ -97,6 +97,76 @@ class OfflineStorage {
     });
   }
 
+  async storeMapTiles(tiles: Array<{url: string, blob: Blob}>): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      const tilesWithMeta = {
+        id: 'map-tiles',
+        data: tiles,
+        timestamp: Date.now()
+      };
+
+      const request = store.put(tilesWithMeta);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+    });
+  }
+
+  async getMapTiles(): Promise<Array<{url: string, blob: Blob}> | null> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get('map-tiles');
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const result = request.result;
+        resolve(result ? result.data : null);
+      };
+    });
+  }
+
+  async storeMapAssets(assets: Record<string, any>): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      const assetsWithMeta = {
+        id: 'map-assets',
+        data: assets,
+        timestamp: Date.now()
+      };
+
+      const request = store.put(assetsWithMeta);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+    });
+  }
+
+  async getMapAssets(): Promise<Record<string, any> | null> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get('map-assets');
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const result = request.result;
+        resolve(result ? result.data : null);
+      };
+    });
+  }
+
   async clearExpiredData(maxAge: number = 7 * 24 * 60 * 60 * 1000): Promise<void> {
     if (!this.db) await this.init();
 

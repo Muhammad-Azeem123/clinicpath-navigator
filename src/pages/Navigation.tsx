@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { StepVisualization } from "@/components/StepVisualization";
 import { RouteVisualization } from "@/components/RouteVisualization";
 import { UniversalSearch } from "@/components/UniversalSearch";
+import { OfflineMapNotice } from "@/components/OfflineMapNotice";
 
 const Navigation = () => {
   const { locations, floors, loading, findRoute } = useNavigation();
@@ -100,6 +101,8 @@ const Navigation = () => {
 
   return (
     <div className="space-y-6">
+      <OfflineMapNotice />
+      
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
           <MapPin className="h-8 w-8 text-primary" />
